@@ -2,7 +2,6 @@
 
 int main(int argc, char *argv[]) {
 
-	char message[20] = "ameya";
 	char *key_file, *out_file, *in_file, *buf;
 	int ifd, ofd, key_size,encdec_flag;
 	uint16_t i;
@@ -12,6 +11,10 @@ int main(int argc, char *argv[]) {
 	RSAPrivateKey key;
 	RSAPrivateKey_init(&key);
 
+	if(argc == 1) {
+		fprintf(stderr,"Help will be printed here!!\n");
+		return 1;
+	}
 	while((c = getopt(argc, argv, "edi:k:o:")) != -1) {
 		switch (c) {
 		case 'e':
@@ -30,15 +33,14 @@ int main(int argc, char *argv[]) {
 			in_file = optarg;
 			break;
 		case '?':
-			//printf("Unknown option character %c.\n",optopt);
+			printf("Unknown option character %c.\n",optopt);
 			return 1;
 		default:
 			abort();
 		}
 	}
-	/*
+	
 	ifd = open(in_file, O_RDONLY);
-
 	if(ifd == -1) {
 		fprintf(stderr, "%s :", in_file);
 		perror(NULL);
@@ -51,22 +53,47 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "%s :", out_file);
 		perror(NULL);
 		exit(errno);
-	}*/
-	/*if(encdec_flag == 1) {
-		DER_to_RSAPrivateKey(key_file, &key);
+	}
+	if(encdec_flag == 1) {
+		DER_to_RSAPublicKey(key_file, &key);
 		key_size = mpz_sizeof(key.n);
 		buf = (char *) malloc(key_size * sizeof(char));
-		while((i = read(ifd, buf, key_size - 12))) {
-			buf[i] = '\0';
-			RSA_Encrypt(buf, &block, &key);
-			write(out_file,&(block.length),sizeof(unsigned int));
-			write(out_file,block.data,&(block.length));
+		while((i = read(ifd, buf, key_size - 9))) {
+			RSA_Encrypt(buf,i,&block, &key);
+			write_block(ofd,&block);
 		}
-	}*/
-	DER_to_RSAPrivateKey(key_file, &key);
+	}
+	else{
+		DER_to_RSAPrivateKey(key_file, &key);
+		//gmp_printf("%Zd\n%Zd\n%Zd\n",key.n,key.d,key.e);
+		key_size = mpz_sizeof(key.n);
+		buf = (char *) malloc(key_size * sizeof(char));
+		while(read_block(ifd,&block)) {
+			i=RSA_Decrypt(&block,buf,&key);
+			write(ofd,buf,i);
+		}
+	}
+	/*DER_to_RSAPrivateKey(key_file, &key);
 	RSA_Encrypt(message,&block,&key);
 	RSA_Decrypt(&block, message, &key);
 	printf("\n%s\n", message);
 	RSAPrivateKey_clear(&key);
+	*/
+	free(buf);
+	close(ifd);
+	close(ofd);
 	return 0;
+}
+int write_block(int fd, RSABlock *block) {
+	write(fd,&(block->data_length),sizeof(unsigned int));
+	write(fd,&(block->msg_length),sizeof(unsigned int));
+	return write(fd,block->data,block->data_length);
+}
+int read_block(int fd, RSABlock *block) {
+	if(read(fd,&(block->data_length),sizeof(unsigned int))==0)
+		return 0;
+	read(fd,&(block->msg_length),sizeof(unsigned int));
+	block->data = (char *)malloc(sizeof(char)*(block->data_length));
+	read(fd,block->data,block->data_length);
+	return block->data_length;
 }

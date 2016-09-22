@@ -25,8 +25,9 @@ typedef struct RSAPrivateKey {
 
 typedef  struct RSABlock {
 	char *data;
-	unsigned int length;
+	unsigned int data_length,msg_length;
 } RSABlock;
+
 
 unsigned int mpz_sizeof(const mpz_t num);
 
@@ -42,6 +43,9 @@ int write_Length(uint8_t * der, unsigned long size);
 int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key);
 int write_RSAPublicKey(uint8_t * der, RSAPrivateKey * key);
 
+int write_block(int fd, RSABlock *block) ;
+int read_block(int fd, RSABlock *block) ;
+
 int RSAPrivateKey_to_DER(char *filepath, RSAPrivateKey * key);
 int DER_to_RSAPrivateKey(char *filepath, RSAPrivateKey * key);
 int RSAPublicKey_to_DER(char *filepath, RSAPrivateKey * key);
@@ -53,6 +57,6 @@ int getrand(mpz_t x, int bits);
 int generate_RSAPrivateKey(RSAPrivateKey * key, int bits);
 
 
-int RSA_Encrypt(char *message, RSABlock *block, RSAPrivateKey * key);
+int RSA_Encrypt(char *message,unsigned int len, RSABlock *block, RSAPrivateKey * key);
 int RSA_Decrypt(RSABlock *block, char *message, RSAPrivateKey * key);
 

@@ -81,16 +81,14 @@ int generate_RSAPrivateKey(RSAPrivateKey * key, int bits) {
 
 }
 
-int RSA_Encrypt(char *message, RSABlock *block, RSAPrivateKey * key) {
-	mpz_t c;
+int RSA_Encrypt(char *message,unsigned int len, RSABlock *block, RSAPrivateKey * key) {
+	mpz_t m,c;
 	int key_length;
 
 	key_length = mpz_sizeof(key->n) - 1;
-	if(strlen(message) > key_length - 11)
-		return -1;
 	char *mes;
 
-
+	mpz_init(m);
 	mpz_init(c);
 	mes = (char *) calloc(sizeof(char) , key_length);
 
@@ -99,41 +97,50 @@ int RSA_Encrypt(char *message, RSABlock *block, RSAPrivateKey * key) {
 		exit(ENOSPC);
 	}
 
-	memcpy(mes, spad, 5);
-	memcpy(mes + 5, message, strlen(message)+1);
-	memcpy(mes + 5 + strlen(message)+1, epad, 5);
-
-	mpz_import(c, key_length, 1, sizeof(char), 0, 0, mes);
-	mpz_powm_sec(c, c, key->e, key->n);
+	memcpy(mes, spad, 4);
+	memcpy(mes + 4, message, len);
+	memcpy(mes + 4 + len, epad, 4);
+	
+	mpz_import(m, key_length, 1, sizeof(char), 0, 0, mes);
+	gmp_printf("%Zd\n",m);
+	mpz_powm_sec(c, m, key->e, key->n);
+	gmp_printf("\n%Zd\n\n\n\n",c);
 
 	block->data = (char *)malloc(sizeof(char)*mpz_sizeof(c));
 	mpz_export(block->data, NULL, 1, sizeof(char), 0, 0, c);
-	block->length=mpz_sizeof(c);
+	block->data_length=mpz_sizeof(c);
+	block->msg_length=len;
 
 	mpz_clear(c);
+	mpz_clear(m);
 
 	free(mes);
 	return 0;
 }
 
-int RSA_Decrypt(RSABlock *block, char *message, RSAPrivateKey * key) {
-	mpz_t m;
+int RSA_Decrypt(RSABlock *block,char *message, RSAPrivateKey * key) {
+	mpz_t c,m;
 	char *mes;
-	mpz_init(m);
-	mes = (char *) calloc(sizeof(char) , mpz_sizeof(key->n));
 
+	mpz_init(m);
+	mpz_init(c);
+	mes = (char *) calloc(sizeof(char) , mpz_sizeof(key->n));
 
 	if(mes ==NULL) {
 		fprintf(stderr,"Heap exhausted !!\n");
 		exit(ENOSPC);
 	}
 
-	mpz_import(m,block->length, 1, sizeof(char), 0, 0,block->data);
-	mpz_powm_sec(m, m, key->d, key->n);
+	mpz_import(c,block->data_length, 1, sizeof(char), 0, 0,block->data);
+	mpz_powm_sec(m, c, key->d, key->n);
+	gmp_printf("%Zd\n",m);
+	gmp_printf("\n%Zd\n\n\n\n",c);
 	mpz_export(mes,NULL, 1, sizeof(char), 0, 0, m);
-	strcpy(message,mes+5);
+	memcpy(message,mes+4,block->msg_length);
 	
 	free(block->data);
+	free(mes);
 	mpz_clear(m);
-	return 0;
+	mpz_clear(c);
+	return block->msg_length;
 }
