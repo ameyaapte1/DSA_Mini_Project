@@ -52,8 +52,8 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 
 	buf = (uint8_t *) calloc(sizeof(uint8_t), mpz_sizeof(key->n));
 
-	if(buf == NULL) {
-		fprintf(stderr, "Heap exhausted !!\n");
+	if(buf ==NULL) {
+		fprintf(stderr,"Heap exhausted !!\n");
 		exit(ENOSPC);
 	}
 
@@ -132,8 +132,8 @@ int write_RSAPublicKey(uint8_t * der, RSAPrivateKey * key) {
 
 	buf = (uint8_t *) calloc(sizeof(uint8_t), mpz_sizeof(key->n));
 
-	if(buf == NULL) {
-		fprintf(stderr, "Heap exhausted !!\n");
+	if(buf ==NULL) {
+		fprintf(stderr,"Heap exhausted !!\n");
 		exit(ENOSPC);
 	}
 
@@ -143,8 +143,7 @@ int write_RSAPublicKey(uint8_t * der, RSAPrivateKey * key) {
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
 
-	buf =
-	    (uint8_t *) realloc(buf, sizeof(uint8_t) * mpz_sizeof(key->e));
+	buf = (uint8_t *) realloc(buf, sizeof(uint8_t) * mpz_sizeof(key->e));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->e);
 	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
@@ -157,26 +156,26 @@ int write_RSAPublicKey(uint8_t * der, RSAPrivateKey * key) {
 int RSAPublicKey_to_DER(char *filepath, RSAPrivateKey * key) {
 	int fd;
 	uint8_t *der;
-	uint16_t size_key, size_total = 0;
+	uint16_t size_key,size_total = 0;
 
 	fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC,
 		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if(fd == -1) {
-		fprintf(stderr, "%s :", filepath);
+		fprintf(stderr,"%s :",filepath);
 		perror(NULL);
 		exit(errno);
 	}
-	size_key = mpz_sizeof(key->n);
-	size_total += size_key;
+	size_key=mpz_sizeof(key->n);
+	size_total+=size_key;
 	size_total += 3;
-	if(size_key < 256)
+	if(size_key<256)
 		size_total += 3 + 6;
 	else
 		size_total += 4 + 6;
 	der = (uint8_t *) calloc(sizeof(uint8_t), size_total + 4);
 
-	if(der == NULL) {
-		fprintf(stderr, "Heap exhausted !!\n");
+	if(der ==NULL) {
+		fprintf(stderr,"Heap exhausted !!\n");
 		exit(ENOSPC);
 	}
 
@@ -200,7 +199,7 @@ int RSAPrivateKey_to_DER(char *filepath, RSAPrivateKey * key) {
 	fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC,
 		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if(fd == -1) {
-		fprintf(stderr, "%s :", filepath);
+		fprintf(stderr,"%s :",filepath);
 		perror(NULL);
 		exit(errno);
 	}
@@ -216,8 +215,8 @@ int RSAPrivateKey_to_DER(char *filepath, RSAPrivateKey * key) {
 
 	der = (uint8_t *) calloc(sizeof(uint8_t), size_total + 4);
 
-	if(der == NULL) {
-		fprintf(stderr, "Heap exhausted !!\n");
+	if(der ==NULL) {
+		fprintf(stderr,"Heap exhausted !!\n");
 		exit(ENOSPC);
 	}
 
@@ -239,7 +238,7 @@ int DER_to_RSAPrivateKey(char *filepath, RSAPrivateKey * key) {
 
 	fd = open(filepath, O_RDONLY);
 	if(fd == -1) {
-		fprintf(stderr, "%s :", filepath);
+		fprintf(stderr,"%s :",filepath);
 		perror(NULL);
 		exit(errno);
 	}
@@ -263,8 +262,8 @@ int DER_to_RSAPrivateKey(char *filepath, RSAPrivateKey * key) {
 	debug_print("Length : %d\n", length);
 	value = (uint8_t *) calloc(sizeof(int), length);
 
-	if(value == NULL) {
-		fprintf(stderr, "Heap exhausted !!\n");
+	if(value ==NULL) {
+		fprintf(stderr,"Heap exhausted !!\n");
 		exit(ENOSPC);
 	}
 
@@ -330,7 +329,7 @@ int DER_to_RSAPublicKey(char *filepath, RSAPrivateKey * key) {
 
 	fd = open(filepath, O_RDONLY);
 	if(fd == -1) {
-		fprintf(stderr, "%s :", filepath);
+		fprintf(stderr,"%s :",filepath);
 		perror(NULL);
 		exit(errno);
 	}
@@ -346,15 +345,15 @@ int DER_to_RSAPublicKey(char *filepath, RSAPrivateKey * key) {
 		return -1;
 	key->version = buf = read_8(fd);
 	if(buf != 0x00)
-		buf = read_16(fd);
+	buf = read_16(fd);
 	debug_print("Size :%d\nVersion :%d\n", key->size, key->version);
 
 	length = getSizeAsUInt(fd);
 	debug_print("Length : %d\n", length);
 	value = (uint8_t *) calloc(sizeof(int), length);
 
-	if(value == NULL) {
-		fprintf(stderr, "Heap exhausted !!\n");
+	if(value ==NULL) {
+		fprintf(stderr,"Heap exhausted !!\n");
 		exit(ENOSPC);
 	}
 
@@ -376,8 +375,8 @@ int DER_to_RSAPublicKey(char *filepath, RSAPrivateKey * key) {
 int RSAPrivateKey_to_RSAPublicKey(char *infile, char *outfile) {
 	RSAPrivateKey key;
 	RSAPrivateKey_init(&key);
-	DER_to_RSAPrivateKey(infile, &key);
-	RSAPublicKey_to_DER(outfile, &key);
+	DER_to_RSAPrivateKey(infile,&key);
+	RSAPublicKey_to_DER(outfile,&key);
 	RSAPrivateKey_clear(&key);
 	return 0;
 }
