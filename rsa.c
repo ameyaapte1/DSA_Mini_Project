@@ -106,7 +106,7 @@ int RSA_Encrypt(char *message,unsigned int len, RSABlock *block, RSAPrivateKey *
 	mpz_powm_sec(c, m, key->e, key->n);
 	gmp_printf("\n%Zd\n\n\n\n",c);
 
-	block->data = (char *)malloc(sizeof(char)*mpz_sizeof(c));
+	block->data = (char *)calloc(sizeof(char),mpz_sizeof(c));
 	mpz_export(block->data, NULL, 1, sizeof(char), 0, 0, c);
 	block->data_length=mpz_sizeof(c);
 	block->msg_length=len;

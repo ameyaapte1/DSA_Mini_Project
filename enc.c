@@ -57,9 +57,10 @@ int main(int argc, char *argv[]) {
 	if(encdec_flag == 1) {
 		DER_to_RSAPublicKey(key_file, &key);
 		key_size = mpz_sizeof(key.n);
-		buf = (char *) malloc(key_size * sizeof(char));
+		buf = (char *) calloc(sizeof(char),key_size);
 		while((i = read(ifd, buf, key_size - 9))) {
 			RSA_Encrypt(buf,i,&block, &key);
+			printf("%d\n",i);
 			write_block(ofd,&block);
 		}
 	}
@@ -67,9 +68,10 @@ int main(int argc, char *argv[]) {
 		DER_to_RSAPrivateKey(key_file, &key);
 		//gmp_printf("%Zd\n%Zd\n%Zd\n",key.n,key.d,key.e);
 		key_size = mpz_sizeof(key.n);
-		buf = (char *) malloc(key_size * sizeof(char));
+		buf = (char *) calloc(sizeof(char),key_size);
 		while(read_block(ifd,&block)) {
 			i=RSA_Decrypt(&block,buf,&key);
+			printf("%d\n",i);
 			write(ofd,buf,i);
 		}
 	}
@@ -93,7 +95,7 @@ int read_block(int fd, RSABlock *block) {
 	if(read(fd,&(block->data_length),sizeof(unsigned int))==0)
 		return 0;
 	read(fd,&(block->msg_length),sizeof(unsigned int));
-	block->data = (char *)malloc(sizeof(char)*(block->data_length));
+	block->data = (char *)calloc(block->data,sizeof(char)*(block->data_length));
 	read(fd,block->data,block->data_length);
 	return block->data_length;
 }

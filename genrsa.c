@@ -25,8 +25,6 @@ int main(int argc, char **argv) {
 	}
 	if(generate_RSAPrivateKey(&key, bits))
 		return errno;
-	RSAPrivateKey_to_DER(outfile, &key);
-
-	
+	RSAPrivateKey_to_DER(outfile, &key);	
 	return 0;
 }
