@@ -58,7 +58,6 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 	}
 
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->n);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -66,7 +65,6 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 	buf =
 	    (uint8_t *) realloc(buf, sizeof(uint8_t) * mpz_sizeof(key->e));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->e);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -74,7 +72,6 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 	buf =
 	    (uint8_t *) realloc(buf, sizeof(uint8_t) * mpz_sizeof(key->d));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->d);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -82,7 +79,6 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 	buf =
 	    (uint8_t *) realloc(buf, sizeof(uint8_t) * mpz_sizeof(key->p));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->p);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -90,7 +86,6 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 	buf =
 	    (uint8_t *) realloc(buf, sizeof(uint8_t) * mpz_sizeof(key->q));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->q);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -99,7 +94,6 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 	    (uint8_t *) realloc(buf,
 				sizeof(uint8_t) * mpz_sizeof(key->dp));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->dp);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -108,7 +102,6 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 	    (uint8_t *) realloc(buf,
 				sizeof(uint8_t) * mpz_sizeof(key->dq));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->dq);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -117,7 +110,6 @@ int write_RSAPrivateKey(uint8_t * der, RSAPrivateKey * key) {
 	    (uint8_t *) realloc(buf,
 				sizeof(uint8_t) * mpz_sizeof(key->iq));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->iq);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -138,7 +130,6 @@ int write_RSAPublicKey(uint8_t * der, RSAPrivateKey * key) {
 	}
 
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->n);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -146,7 +137,6 @@ int write_RSAPublicKey(uint8_t * der, RSAPrivateKey * key) {
 	buf =
 	    (uint8_t *) realloc(buf, sizeof(uint8_t) * mpz_sizeof(key->e));
 	mpz_export(buf, &size, 1, sizeof(uint8_t), 0, 0, key->e);
-	debug_print("Size of number: %ld\n", size);
 	write_Length(der, size);
 	for(i = 0; i < size; i++)
 		write_8(der, buf[i]);
@@ -248,8 +238,10 @@ int DER_to_RSAPrivateKey(char *filepath, RSAPrivateKey * key) {
 		key->size = read_8(fd);
 	else if(buf == 0x3082)
 		key->size = read_16(fd);
-	else
-		return -1;
+	else {
+		fprintf(stderr,"Illegal or Corrupt key\n");
+		exit(1);
+	}
 	buf = read_16(fd);
 	if(buf != 0x0201)
 		return -1;
@@ -257,10 +249,8 @@ int DER_to_RSAPrivateKey(char *filepath, RSAPrivateKey * key) {
 	if(buf != 0x00)
 
 		return -1;
-	debug_print("Size :%d\nVersion :%d\n", key->size, key->version);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) calloc(sizeof(int), length);
 
 	if(value == NULL) {
@@ -273,54 +263,48 @@ int DER_to_RSAPrivateKey(char *filepath, RSAPrivateKey * key) {
 	mpz_import(key->n, length, 1, sizeof(uint8_t), 0, 0, value);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) realloc(value, length);
 	for(i = 0; i < length; i++)
 		value[i] = read_8(fd);
 	mpz_import(key->e, length, 1, sizeof(uint8_t), 0, 0, value);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) realloc(value, length);
 	for(i = 0; i < length; i++)
 		value[i] = read_8(fd);
 	mpz_import(key->d, length, 1, sizeof(uint8_t), 0, 0, value);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) realloc(value, length);
 	for(i = 0; i < length; i++)
 		value[i] = read_8(fd);
 	mpz_import(key->p, length, 1, sizeof(uint8_t), 0, 0, value);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) realloc(value, length);
 	for(i = 0; i < length; i++)
 		value[i] = read_8(fd);
 	mpz_import(key->q, length, 1, sizeof(uint8_t), 0, 0, value);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) realloc(value, length);
 	for(i = 0; i < length; i++)
 		value[i] = read_8(fd);
 	mpz_import(key->dp, length, 1, sizeof(uint8_t), 0, 0, value);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) realloc(value, length);
 	for(i = 0; i < length; i++)
 		value[i] = read_8(fd);
 	mpz_import(key->dq, length, 1, sizeof(uint8_t), 0, 0, value);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) realloc(value, length);
 	for(i = 0; i < length; i++)
 		value[i] = read_8(fd);
 	mpz_import(key->iq, length, 1, sizeof(uint8_t), 0, 0, value);
 
+	free(value);
 	close(fd);
 	return 0;
 }
@@ -339,18 +323,18 @@ int DER_to_RSAPublicKey(char *filepath, RSAPrivateKey * key) {
 		key->size = read_8(fd);
 	else if(buf == 0x3082)
 		key->size = read_16(fd);
-	else
-		return -1;
+	else {
+		fprintf(stderr,"Illegal or Corrput key\n");
+		exit(1);
+	}
 	buf = read_16(fd);
 	if(buf != 0x0201)
 		return -1;
 	key->version = buf = read_8(fd);
 	if(buf != 0x00)
 		buf = read_16(fd);
-	debug_print("Size :%d\nVersion :%d\n", key->size, key->version);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) calloc(sizeof(int), length);
 
 	if(value == NULL) {
@@ -363,7 +347,6 @@ int DER_to_RSAPublicKey(char *filepath, RSAPrivateKey * key) {
 	mpz_import(key->n, length, 1, sizeof(uint8_t), 0, 0, value);
 
 	length = getSizeAsUInt(fd);
-	debug_print("Length : %d\n", length);
 	value = (uint8_t *) realloc(value, length);
 	for(i = 0; i < length; i++)
 		value[i] = read_8(fd);

@@ -3,20 +3,31 @@
 int main(int argc, char *argv[]) {
 
 	char *key_file, *out_file, *in_file, *buf;
-	int ifd, ofd, key_size, encdec_flag;
-	uint16_t i;
+	int key_size, encdec_flag;
+	FILE *ifd, *ofd;
+	size_t len;
 	char c;
-
+	char *help="Usage: ./enc [OPTION]... [FILE]...\n\
+Encrypt/Decrypt files using RSA Public/Private keys.\n\
+Mandatory option are -e/d -i infile -o outfile -k key_file\n\
+    -e                    Encrypt data.\n\
+    -d			  Decrypt data.\n\
+    -i infile		  The file to be encrypted.\n\
+    -o outfile     	  The filename of the encrypted file.\n\
+    -k keyfile            RSA key file.\n\n";
 	RSABlock block;
 	RSAPrivateKey key;
 	RSAPrivateKey_init(&key);
 
-	if(argc == 1) {
-		fprintf(stderr, "Help will be printed here!!\n");
+	if(argc < 8) {
+		fprintf(stderr, "Not enough arguments\n%s",help);
 		return 1;
 	}
-	while((c = getopt(argc, argv, "edi:k:o:")) != -1) {
+	while((c = getopt(argc, argv, "hedi:k:o:")) != -1) {
 		switch (c) {
+		case 'h':
+			printf("%s",help);
+			break;
 		case 'e':
 			encdec_flag = 1;
 			break;
@@ -39,41 +50,51 @@ int main(int argc, char *argv[]) {
 			abort();
 		}
 	}
+	printf("Encrypting %s to %s using %s key......\n",in_file,out_file,key_file);
 
-	ifd = open(in_file, O_RDONLY);
-	if(ifd == -1) {
+	mpz_init(block.message);
+	mpz_init(block.ciphertext);
+
+	ifd = fopen(in_file,"r");
+	if(ifd == NULL) {
 		fprintf(stderr, "%s :", in_file);
 		perror(NULL);
 		exit(errno);
 	}
 
-	ofd =
-	    open(out_file, O_WRONLY | O_CREAT | O_TRUNC,
-		 S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
-	if(ifd == -1) {
+	ofd = fopen(out_file, "w");
+	if(ifd == NULL) {
 		fprintf(stderr, "%s :", out_file);
 		perror(NULL);
 		exit(errno);
 	}
+
 	if(encdec_flag == 1) {
+		fwrite("RSA ENCRYPTED",sizeof(char),14,ofd);
 		DER_to_RSAPublicKey(key_file, &key);
 		key_size = mpz_sizeof(key.n);
 		buf = (char *) calloc(sizeof(char), key_size);
-		while((i = read(ifd, buf, key_size - 9))) {
-			RSA_Encrypt(buf, i, &block, &key);
-			printf("%d\n", i);
-			write_block(ofd, &block);
+
+		while((len = fread(buf,1,key_size-9,ifd))) {
+			RSA_Encrypt(buf, len, &block, &key);
+			fwrite(&len,sizeof(size_t),1,ofd);
+			mpz_out_raw(ofd,block.ciphertext);
 		}
+		
 	} else {
 		DER_to_RSAPrivateKey(key_file, &key);
 		//gmp_printf("%Zd\n%Zd\n%Zd\n",key.n,key.d,key.e);
 		key_size = mpz_sizeof(key.n);
 		buf = (char *) calloc(sizeof(char), key_size);
-		while(read_block(ifd, &block)) {
-			i = RSA_Decrypt(&block, buf, &key);
-			printf("%d\n", i);
-			write(ofd, buf, i);
+		fread(buf,sizeof(char),14,ifd);
+		if(strcmp(buf,"RSA ENCRYPTED") !=0 ){
+			fprintf(stderr,"Illegal or corrupt encrytped file.\n");
+			exit(1);
+		}
+		while(fread(&len,sizeof(size_t),1,ifd)) {
+			mpz_inp_raw(block.ciphertext,ifd);
+			RSA_Decrypt(&block, buf,len, &key);
+			fwrite(buf,1,len,ofd);
 		}
 	}
 	/*DER_to_RSAPrivateKey(key_file, &key);
@@ -82,23 +103,13 @@ int main(int argc, char *argv[]) {
 	   printf("\n%s\n", message);
 	   RSAPrivateKey_clear(&key);
 	 */
+	mpz_clear(block.message);
+	mpz_clear(block.ciphertext);
+
+	printf("File encrypted Successfully\n");
+
 	free(buf);
-	close(ifd);
-	close(ofd);
+	fclose(ifd);
+	fclose(ofd);
 	return 0;
-}
-int write_block(int fd, RSABlock * block) {
-	write(fd, &(block->data_length), sizeof(unsigned int));
-	write(fd, &(block->msg_length), sizeof(unsigned int));
-	return write(fd, block->data, block->data_length);
-}
-int read_block(int fd, RSABlock * block) {
-	if(read(fd, &(block->data_length), sizeof(unsigned int)) == 0)
-		return 0;
-	read(fd, &(block->msg_length), sizeof(unsigned int));
-	block->data =
-	    (char *) calloc(block->data,
-			    sizeof(char) * (block->data_length));
-	read(fd, block->data, block->data_length);
-	return block->data_length;
 }

@@ -19,6 +19,17 @@
 
 #define BACKLOG 10	 // how many pending connections queue will hold
 
+int readline(char *dest) {
+	char ch;
+	int i=0;
+	while((ch=getchar())) {
+		if(ch == '\n')
+			return i;
+		else 
+			dest[i++]=ch;
+	}
+	return i;
+}
 void sigchld_handler(int s)
 {
 	// waitpid() might overwrite errno, so we save and restore it:
@@ -49,6 +60,8 @@ int main(void)
 	struct sigaction sa;
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
+	char buf[1024];
+	int len;
 	int rv;
 
 	memset(&hints, 0, sizeof hints);
@@ -114,15 +127,14 @@ int main(void)
 			continue;
 		}
 
-		inet_ntop(their_addr.ss_family,
-			get_in_addr((struct sockaddr *)&their_addr),
-			s, sizeof s);
+		inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s);
 		printf("server: got connection from %s\n", s);
 
 		if (!fork()) { // this is the child process
 			close(sockfd); // child doesn't need the listener
-			while (send(new_fd, "Hello, world!", 13, 0) != -1)
-			//close(new_fd);
+			while ((len=readline(buf))) 
+				send(new_fd, buf, len, 0);
+			close(new_fd);
 			exit(0);
 		}
 		close(new_fd);  // parent doesn't need this

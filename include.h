@@ -15,8 +15,6 @@
 #define DEBUG 0
 #define spad "abcd"
 #define epad "dcba"
-#define debug_print(fmt, ...) \
-            do { if (DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)
 
 typedef struct RSAPrivateKey {
 	unsigned short int size, version,key_type;
@@ -24,8 +22,8 @@ typedef struct RSAPrivateKey {
 } RSAPrivateKey;
 
 typedef  struct RSABlock {
-	char *data;
-	unsigned int data_length,msg_length;
+	mpz_t ciphertext,message;
+	unsigned int msg_length;
 } RSABlock;
 
 
@@ -57,6 +55,6 @@ int getrand(mpz_t x, int bits);
 int generate_RSAPrivateKey(RSAPrivateKey * key, int bits);
 
 
-int RSA_Encrypt(char *message,unsigned int len, RSABlock *block, RSAPrivateKey * key);
-int RSA_Decrypt(RSABlock *block, char *message, RSAPrivateKey * key);
+int RSA_Encrypt(char *message,size_t len, RSABlock *block, RSAPrivateKey * key);
+int RSA_Decrypt(RSABlock *block, char *message,size_t len, RSAPrivateKey * key);
 
