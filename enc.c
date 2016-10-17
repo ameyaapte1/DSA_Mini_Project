@@ -50,7 +50,6 @@ Mandatory option are -e/d -i infile -o outfile -k key_file\n\
 			abort();
 		}
 	}
-	printf("Encrypting %s to %s using %s key......\n",in_file,out_file,key_file);
 
 	mpz_init(block.message);
 	mpz_init(block.ciphertext);
@@ -70,8 +69,9 @@ Mandatory option are -e/d -i infile -o outfile -k key_file\n\
 	}
 
 	if(encdec_flag == 1) {
-		fwrite("RSA ENCRYPTED",sizeof(char),14,ofd);
+		printf("Encrypting %s to %s using %s ......\n",in_file,out_file,key_file);
 		DER_to_RSAPublicKey(key_file, &key);
+		fwrite("RSA ENCRYPTED",sizeof(char),14,ofd);
 		key_size = mpz_sizeof(key.n);
 		buf = (char *) calloc(sizeof(char), key_size);
 
@@ -80,8 +80,10 @@ Mandatory option are -e/d -i infile -o outfile -k key_file\n\
 			fwrite(&len,sizeof(size_t),1,ofd);
 			mpz_out_raw(ofd,block.ciphertext);
 		}
+		printf("File encrypted Successfully\n");
 		
 	} else {
+		printf("Decrypting %s to %s using %s ......\n",in_file,out_file,key_file);
 		DER_to_RSAPrivateKey(key_file, &key);
 		//gmp_printf("%Zd\n%Zd\n%Zd\n",key.n,key.d,key.e);
 		key_size = mpz_sizeof(key.n);
@@ -96,6 +98,7 @@ Mandatory option are -e/d -i infile -o outfile -k key_file\n\
 			RSA_Decrypt(&block, buf,len, &key);
 			fwrite(buf,1,len,ofd);
 		}
+		printf("File decrypted Successfully\n");
 	}
 	/*DER_to_RSAPrivateKey(key_file, &key);
 	   RSA_Encrypt(message,&block,&key);
@@ -106,7 +109,6 @@ Mandatory option are -e/d -i infile -o outfile -k key_file\n\
 	mpz_clear(block.message);
 	mpz_clear(block.ciphertext);
 
-	printf("File encrypted Successfully\n");
 
 	free(buf);
 	fclose(ifd);

@@ -1,6 +1,7 @@
 #include "include.h"
 int main(int argc, char **argv) {
 	int bits = 1024;
+	int public_key=0;
 	char c;
 	char outfile[256] = "rsa_private_key.der";
 	char *infile;
@@ -27,6 +28,7 @@ No options are mandatory\n\
 			printf("%s",help);
 			break;
 		case 'p':
+			public_key=1;
 			infile = optarg;			
 			break;
 		case '?':
@@ -40,13 +42,22 @@ No options are mandatory\n\
 	if(!strstr(outfile,".der")){
 		strcat(outfile,".der");
 	}
-	printf("Generating %d bits RSA Private key......\n",bits);
+	if(public_key == 0) {
+		printf("Generating %d bits RSA Private key......\n",bits);
 
-	if(generate_RSAPrivateKey(&key, bits))
-		return errno;
-	RSAPrivateKey_to_DER(outfile, &key);
+		if(generate_RSAPrivateKey(&key, bits))
+			return errno;
+		RSAPrivateKey_to_DER(outfile, &key);
 
-	printf("%d bits RSA Private key generated and written to %s\n",bits,outfile);
+		printf("%d bits RSA Private key generated and written to %s\n",bits,outfile);
+	}
+	else {
+		printf("Extracting %d bits RSA Public key from Private key ......\n",bits);
+
+		RSAPrivateKey_to_RSAPublicKey(infile,outfile);
+
+		printf("%d bits RSA Public key generated and written to %s\n",bits,outfile);
+	}
 
 	return 0;
 }
