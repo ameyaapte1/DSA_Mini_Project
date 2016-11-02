@@ -1,0 +1,14 @@
+#!/bin/bash 
+if [ "$1" == 'genrsa' ]; 
+	then
+		shift 
+		./genrsa $@
+	else 
+		if [ "$1" == 'enc' ]; 
+		then
+			shift
+			./enc $@
+		else
+			echo "Usage : ./project [genrsa]/[enc] args"
+		fi
+fi 

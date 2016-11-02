@@ -1,0 +1,27 @@
+RSA Implementation in C
+
+Ameya Apte 
+111503010
+SY Comp
+
+RSA has been implemented using a multiple precision library.
+Most of the features are similar to the  "openssl rsa" utility, the same has been used for testing corectness of keys and file format.
+"genrsa" generates private key and store it in DER or PEM format (default).It also generates public key from private keys.
+
+DER format uses ASN.1 (Abstract syntax notation) to represent modulus, exponent and all other componenets or RSA keys.
+PEM format is more popular and it is BASE64 representation of DER format.
+Both of these formats are supported by OpenSSL.
+
+For more information about both the formats:
+
+https://en.wikipedia.org/wiki/X.690#DER_encoding
+https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One
+
+The "enc" utility can read DER/PEM files and encrypt/decrypt files using the RSA algorithm.
+
+Whats not supported:
+
+RSA public keys are not compliant with OpenSSL and PEM format is not supported.
+
+Dependencies:
+gmp-6.1.1
