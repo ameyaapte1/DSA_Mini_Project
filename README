@@ -25,3 +25,4 @@ RSA public keys are not compliant with OpenSSL and PEM format is not supported.
 
 Dependencies:
 gmp-6.1.1
+https://gmplib.org/download/gmp/gmp-6.1.1.tar.lz
